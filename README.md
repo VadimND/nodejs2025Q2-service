@@ -8,7 +8,13 @@
 ## Downloading
 
 ```
-git clone {repository URL}
+git clone https://github.com/VadimND/nodejs2025Q2-service.git
+```
+
+## Change Directory
+
+```
+cd nodejs2025Q2-service
 ```
 
 ## Installing NPM modules
