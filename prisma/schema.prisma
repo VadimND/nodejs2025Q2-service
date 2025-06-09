@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String     @id @default(uuid())
+  login       String
+  password    String
+  version     Int        @default(1)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now()) @updatedAt
+}
+
+model Artist {
+  id          String     @id @default(uuid())
+  name        String
+  grammy      Boolean
+  favorite    Boolean    @default(false)
+  tracks      Track[]
+  albums      Album[]
+}
+
+model Album {
+  id          String     @id @default(uuid())
+  name        String
+  year        Int
+  artistId    String?
+  favorite    Boolean    @default(false)
+  artist      Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  tracks      Track[]
+}
+
+model Track {
+  id          String     @id @default(uuid())
+  name        String
+  artistId    String?
+  albumId     String?
+  duration    Int
+  favorite    Boolean    @default(false)
+  artist      Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  album       Album?     @relation(fields: [albumId], references: [id], onDelete: SetNull)
+}
