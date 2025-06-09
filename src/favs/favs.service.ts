@@ -1,85 +1,111 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { favs, artists, albums, tracks } from 'src/memdb/memdb';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class FavsService {
-  findAll() {
-    const favArtists = favs.artists.map((id) =>
-      artists.find((artist) => artist.id === id),
-    );
-    const favAlbums = favs.albums.map((id) =>
-      albums.find((album) => album.id === id),
-    );
-    const favTracks = favs.tracks.map((id) =>
-      tracks.find((track) => track.id === id),
-    );
+  constructor(private prisma: PrismaService) {}
 
+  async findAll() {
+    const favArtists = await this.prisma.artist.findMany({
+      where: { favorite: true },
+    });
+    const favAlbums = await this.prisma.album.findMany({
+      where: { favorite: true },
+    });
+    const favTracks = await this.prisma.track.findMany({
+      where: { favorite: true },
+    });
     return {
-      artists: favArtists,
-      albums: favAlbums,
-      tracks: favTracks,
+      artists: favArtists.map((obj) => {
+        const { favorite, ...clear } = obj;
+        return clear;
+      }),
+      albums: favAlbums.map((obj) => {
+        const { favorite, ...clear } = obj;
+        return clear;
+      }),
+      tracks: favTracks.map((obj) => {
+        const { favorite, ...clear } = obj;
+        return clear;
+      }),
     };
   }
 
-  addTrack(id: string) {
-    const track = tracks.find((track) => track.id === id);
+  async addTrack(id: string) {
+    const track = await this.prisma.track.findUnique({ where: { id } });
     if (!track) {
-      throw new HttpException(
-        'Track not found',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw new HttpException('Track not found', HttpStatus.UNPROCESSABLE_ENTITY);
     }
-    favs.tracks.push(track.id);
-    return track;
+    const newTrack = await this.prisma.track.update({
+      where: { id },
+      data: { favorite: true },
+    });
+    return newTrack;
   }
 
-  removeTrack(id: string) {
-    const index = favs.tracks.indexOf(id);
-
-    if (index === -1) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+  async removeTrack(id: string) {
+    const track = await this.prisma.track.findUnique({
+      where: { id, favorite: true },
+    });
+    if (!track) {
+      throw new HttpException('Track not found in Favorites', HttpStatus.NOT_FOUND);
     }
-    favs.tracks.splice(index, 1);
+    await this.prisma.track.update({
+      where: { id },
+      data: { favorite: false },
+    });
   }
 
-  addAlbum(id: string) {
-    const album = albums.find((album) => album.id === id);
+  async addAlbum(id: string) {
+    const album = await this.prisma.album.findUnique({
+      where: { id },
+    });
     if (!album) {
-      throw new HttpException(
-        'Album not found',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw new HttpException('Album not found', HttpStatus.UNPROCESSABLE_ENTITY);
     }
-    favs.albums.push(album.id);
-    return album;
+    return await this.prisma.album.update({
+      where: { id },
+      data: { favorite: true },
+    });
   }
 
-  removeAlbum(id: string) {
-    const index = favs.albums.indexOf(id);
-
-    if (index === -1) {
-      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+  async removeAlbum(id: string) {
+    const album = await this.prisma.album.findUnique({
+      where: { id, favorite: true },
+    });
+    if (!album) {
+      throw new HttpException('Album not found in Favorites', HttpStatus.NOT_FOUND);
     }
-    favs.albums.splice(index, 1);
+    await this.prisma.album.update({
+      where: { id },
+      data: { favorite: false },
+    });
   }
 
-  addArtist(id: string) {
-    const artist = artists.find((artist) => artist.id === id);
+  async addArtist(id: string) {
+    const artist = await this.prisma.artist.findUnique({
+      where: { id },
+    });
     if (!artist) {
-      throw new HttpException(
-        'Artist not found',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      throw new HttpException('Artist not found', HttpStatus.UNPROCESSABLE_ENTITY);
     }
-    favs.artists.push(artist.id);
-    return artist;
+    await this.prisma.artist.update({
+      where: { id },
+      data: { favorite: true },
+    });
   }
 
-  removeArtist(id: string) {
-    const index = favs.artists.indexOf(id);
-    if (index === -1) {
-      throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+  async removeArtist(id: string) {
+    const artist = await this.prisma.artist.findUnique({
+      where: { id, favorite: true },
+    });
+    if (!artist) {
+      throw new HttpException('Artist not found in Favorites', HttpStatus.NOT_FOUND);
     }
-    favs.artists.splice(index, 1);
+    await this.prisma.artist.update({
+      where: { id },
+      data: { favorite: false },
+    });
   }
 }

@@ -38,10 +38,7 @@ export class ArtistController {
 
   @UsePipes(new ValidationPipe())
   @Put(':id')
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateArtistDto: UpdateArtistDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateArtistDto: UpdateArtistDto) {
     return this.artistService.update(id, updateArtistDto);
   }
 

@@ -1,53 +1,44 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { v4 } from 'uuid';
-import { users } from 'src/memdb/memdb';
 import { User } from './entities/user.entity';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
+  constructor(private prisma: PrismaService) {}
+
   userReturn(user: User) {
     const result = {
       id: user.id,
       login: user.login,
       version: user.version,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      createdAt: new Date(user.createdAt).getTime(),
+      updatedAt: new Date(user.updatedAt).getTime(),
     };
 
     return result;
   }
 
-  create(createUserDto: CreateUserDto) {
-    const timestamp = Date.now();
-    const newUser = {
-      id: v4(),
-      login: createUserDto.login,
-      password: createUserDto.password,
-      version: 1,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-
-    users.push(newUser);
-
-    return this.userReturn(newUser);
+  async create(createUserDto: CreateUserDto) {
+    const user = await this.prisma.user.create({ data: createUserDto });
+    return this.userReturn(user);
   }
 
-  findAll() {
+  async findAll() {
+    const users = await this.prisma.user.findMany();
     return users.map((user) => this.userReturn(user));
   }
 
-  findOne(id: string) {
-    const user = users.find((user) => user.id === id);
+  async findOne(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return this.userReturn(user);
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     const { oldPassword, newPassword } = updateUserDto;
     if (!oldPassword) {
       throw new HttpException(
@@ -62,7 +53,7 @@ export class UserService {
       );
     }
 
-    const user = users.find((user) => user.id === id);
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
@@ -71,19 +62,25 @@ export class UserService {
       throw new HttpException('Wrong old password', HttpStatus.FORBIDDEN);
     }
 
-    user.password = newPassword;
-    user.version += 1;
-    user.updatedAt = Date.now();
+    const updateData = {
+      password: newPassword,
+      version: user.version + 1,
+    };
 
-    return this.userReturn(user);
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return this.userReturn(updatedUser);
   }
 
-  remove(id: string) {
-    const index = users.findIndex((user) => user.id === id);
-    if (index === -1) {
+  async remove(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    users.splice(index, 1);
+    await this.prisma.user.delete({ where: { id } });
   }
 }
