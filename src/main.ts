@@ -15,6 +15,9 @@ async function bootstrap() {
   const swaggerDocument = parse(file);
   SwaggerModule.setup('doc', app, swaggerDocument);
 
-  await app.listen(PORT);
+  await app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`API is available at http://localhost:${PORT}/doc`);
+  });
 }
 bootstrap();
