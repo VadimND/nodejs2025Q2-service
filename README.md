@@ -15,7 +15,7 @@ git clone https://github.com/VadimND/nodejs2025Q2-service.git
 
 ```
 cd nodejs2025Q2-service
-git checkout docker
+git checkout logging
 ```
 
 ## Installing NPM modules
@@ -55,11 +55,6 @@ To run the full environment:
 
 ```bash
 docker compose up --build
-```
-or 
-
-```bash
-docker pull vadimnd/home-library-app
 ```
 
 ## Testing
