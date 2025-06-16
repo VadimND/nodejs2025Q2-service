@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -22,7 +22,7 @@ export class AlbumService {
   async findOne(id: string) {
     const album = await this.prisma.album.findUnique({ where: { id } });
     if (!album) {
-      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Album not found');
     }
     return album;
   }
@@ -30,17 +30,17 @@ export class AlbumService {
   async update(id: string, updateAlbumDto: UpdateAlbumDto) {
     const { name, year, artistId } = updateAlbumDto;
     if (!name) {
-      throw new HttpException('Name are required', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Name are required');
     }
     if (!year) {
-      throw new HttpException('Year are required', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Year are required');
     }
     if (artistId === undefined) {
-      throw new HttpException('Artist are required', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Artist are required');
     }
     const album = await this.prisma.album.findUnique({ where: { id } });
     if (!album) {
-      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Album not found');
     }
 
     const updatedAlbum = await this.prisma.album.update({
@@ -54,7 +54,7 @@ export class AlbumService {
   async remove(id: string) {
     const album = await this.prisma.album.findUnique({ where: { id } });
     if (!album) {
-      throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Album not found');
     }
 
     await this.prisma.album.delete({ where: { id } });

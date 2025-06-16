@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ForbiddenException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -20,6 +20,13 @@ export class UserService {
     return result;
   }
 
+  async findByLogin(login: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { login },
+    });
+    return user;
+  }
+  
   async create(createUserDto: CreateUserDto) {
     const user = await this.prisma.user.create({ data: createUserDto });
     return this.userReturn(user);
@@ -33,7 +40,7 @@ export class UserService {
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('User not found');
     }
     return this.userReturn(user);
   }
@@ -41,25 +48,19 @@ export class UserService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     const { oldPassword, newPassword } = updateUserDto;
     if (!oldPassword) {
-      throw new HttpException(
-        'Old password are required',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('Old password are required');
     }
     if (!newPassword) {
-      throw new HttpException(
-        'New password are required',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('New password are required');
     }
 
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('User not found');
     }
 
     if (user.password !== oldPassword) {
-      throw new HttpException('Wrong old password', HttpStatus.FORBIDDEN);
+      throw new ForbiddenException('Wrong old password');
     }
 
     const updateData = {
@@ -78,7 +79,7 @@ export class UserService {
   async remove(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('User not found');
     }
 
     await this.prisma.user.delete({ where: { id } });

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -22,7 +22,7 @@ export class TrackService {
   async findOne(id: string) {
     const track = await this.prisma.track.findUnique({ where: { id } });
     if (!track) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Track not found');
     }
     return track;
   }
@@ -30,7 +30,7 @@ export class TrackService {
   async update(id: string, updateTrackDto: UpdateTrackDto) {
     const track = await this.prisma.track.findUnique({ where: { id } });
     if (!track) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Track not found');
     }
 
     const updatedTrack = await this.prisma.track.update({
@@ -44,7 +44,7 @@ export class TrackService {
   async remove(id: string) {
     const track = await this.prisma.track.findUnique({ where: { id } });
     if (!track) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Track not found');
     }
 
     await this.prisma.track.delete({ where: { id } });
